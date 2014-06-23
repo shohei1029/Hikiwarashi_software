@@ -1,9 +1,8 @@
-//version 1.0.1.0 Dev //<>//
+//version 1.0.2.0 Dev //<>//
 //made by Shohei N. in Japan 
 //special thanks to Kento S. for advice
 
 //予定
-//・音声ファイルのパスの一元管理
 //・何も引っ張っていないときでもたまに鳴き声流す
 //・（電源をACに）
 
@@ -24,6 +23,7 @@ AudioPlayer player_pulled; //抜かれた時
 AudioPlayer player_1; //mode1
 AudioPlayer player_2; //mode2
 AudioPlayer player_3; //mode3
+AudioPlayer player_waiting; //waiting
 
 //Arduino,pressure sensor
 Arduino arduino;
@@ -41,7 +41,7 @@ int mode=0;
 int max_hippari=0;
 
 boolean playing;
-int waitingchirp;
+float waitingchirp;
 
 void setup() {
   size(400, 200);
@@ -49,12 +49,11 @@ void setup() {
   arduino = new Arduino(this, Arduino.list()[2], 57600);
   // set up MusicPlayer
   minim = new Minim(this);
-  player_pulled = minim.loadFile("../../Sound/hya-yorokobi.mp3");
-  player_3 = minim.loadFile("../../Sound/aaaaa.mp3");
-  player_2 = minim.loadFile("../../Sound/ho-rarechara.mp3");
-  player_1 = minim.loadFile("../../Sound/fuck-e.mp3");
-
-  //
+  player_pulled = minim.loadFile("hya-yorokobi.mp3");
+  player_3 = minim.loadFile("aaaaa.mp3");
+  player_2 = minim.loadFile("ho-rarechara.mp3");
+  player_1 = minim.loadFile("fuck-e.mp3");
+  player_waiting = minim.loadFile("ae.mp3");
 }
 
 void draw() {
@@ -75,27 +74,8 @@ void draw() {
 
 
   if (millis % 5 == 0) {
-    //read sensor value
-    float sensor_ori_value = arduino.analogRead(sensor_pin);
-    sensor_value = map(sensor_ori_value, 0, 665, 0, 100);
-
-    //play sounds -nakigoe
-    if (!player_pulled.isPlaying() && !player_3.isPlaying() && !player_2.isPlaying() && !player_1.isPlaying()) { //play sound
-      if (max_hippari == 1 && sensor_value > 95 ) {
-        nakigoe(true, player_pulled);
-        max_hippari = 0;
-      }
-      if (mode == 3) {
-        nakigoe(true, player_3);
-      } else if (mode == 2) {
-        nakigoe(true, player_2);
-      } else if (mode == 1) {
-        nakigoe(true, player_1);
-      }
-    }
-  } else { //run motor
     if (run) {
-      if (sensor_value <= 50) {
+      if (sensor_value <= 30) {
         mode = 3;
         max_hippari=1; //最大まで引っ張られたことを記録
         arduino.digitalWrite(motorA, Arduino.LOW);
@@ -115,6 +95,29 @@ void draw() {
         mode = 0;
         arduino.digitalWrite(motorA, Arduino.LOW);
         arduino.digitalWrite(motorB, Arduino.LOW);
+      }
+    }
+  } else { 
+    //read sensor value
+    float sensor_ori_value = arduino.analogRead(sensor_pin);
+    sensor_value = map(sensor_ori_value, 0, 665, 0, 100);
+
+    waitingchirp = random(1, 10);//引いてない時の鳴き声再生
+
+    //play sounds -nakigoe
+    if (!player_pulled.isPlaying() && !player_3.isPlaying() && !player_2.isPlaying() && !player_1.isPlaying()) { //play sound
+      if (max_hippari == 1 && sensor_value > 95 ) {
+        nakigoe(true, player_pulled);
+        max_hippari = 0;
+      }
+      if (mode == 3) {
+        nakigoe(true, player_3);
+      } else if (mode == 2) {
+        nakigoe(true, player_2);
+      } else if (mode == 1) {
+        nakigoe(true, player_1);
+      } else if (mode == 0 && waitingchirp == 7) {
+        nakigoe(true, player_waiting);
       }
     }
   }
@@ -141,6 +144,7 @@ void stop()
   player_1.close();
   player_2.close();
   player_3.close();
+  player_waiting.close();
   minim.stop();
   super.stop();
 }
