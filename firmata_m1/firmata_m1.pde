@@ -11,6 +11,8 @@
 //今のコードだと常にmode==3のときにしか流れない。
 //→途中でmode==2になると切れる。
 
+//圧力センサ0-1のみのランダム再生用意しとく。
+
 //Firmata
 import org.firmata.*;
 import processing.serial.*;
