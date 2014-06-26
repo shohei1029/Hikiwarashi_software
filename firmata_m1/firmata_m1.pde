@@ -1,12 +1,12 @@
-//version 1.4.0.1 Dev //<>//
+//version 1.5.0.0 Dev //<>//
 //made by Shohei N. in Japan 
-//special thanks to Kento S. for advice
+//special thanks to HASEKEN, sasaken and Mr.Asano for advice
 
 //課題
 //抜いた人参を戻したときの検知
 //引き合ってる時の音量下げる
 //引き合いと抜けたあとの音がかぶる
-//引っ張ってるだけでぽんぽｐんなる→常に圧力開け続けないといけない
+//引っ張ってるだけでぽんぽんなる→常に圧力開け続けないといけない
 //→最悪音量
 //圧力センサの設置方法が悪い
 //圧力が何秒以上0だったら抜かれたと検知。0.5秒とか
@@ -116,27 +116,55 @@ void draw() {
     waitingchirp = (int)random(1000);//引いてない時の鳴き声再生
     mode1random = (int)random(10);
 
+    float pulled_delay;
+    float pulled_delay_after;
     //play sounds -nakigoe
     //if (!player_1.isPlaying() && !player_3.isPlaying() && !player_4.isPlaying() && !player_5.isPlaying() && !player_6.isPlaying()) { //play sound
     if (!playing) {
-      if (max_hippari && sensor_value > 95 ) { //抜かれたとき
-                //
+
+      if (max_hippari && sensor_value > 80 ) { //抜かれたとき
+        //if (millis == pulled_delay + 801) { //抜かれた801ミリ秒後に音声再生
         //decide playing sounds at random
+
         x4=(int)random(3);
         x5=(int)random(4);
         playing=true;
+        
+        println("1");
         nakigoe(true, player_4[x4]);//pon
+
+        pulled_delay = millis;
+        pulled_delay_after = pulled_delay;
+        while (pulled_delay_after < pulled_delay + 1000) {
+          pulled_delay_after = millis();
+        }
+
+        
         nakigoe(true, player_5[x5]);//after pulling
         max_hippari = false;
-      } else if (mode1 && mode1random == 7) { //引っ張りあってるとき
+      
+    } else if (mode1/* && mode1random == 7*/) { //引っ張りあってるとき
         x3=(int)random(3);
         playing=true;
+        println("2");
         nakigoe(true, player_3[x3]);
+
+        pulled_delay = millis;
+        pulled_delay_after = pulled_delay;
+        while (pulled_delay_after < pulled_delay + 100) {
+          pulled_delay_after = millis();
+        }        
+
+        playing = false;
         mode1=false;
+        
       } else if (mode == 0 && waitingchirp == 7) { //待機時にランダムで
         x1=(int)random(1);
         playing=true;
+        println("3");
         nakigoe(true, player_1[x1]);
+        playing=false;
+
       }
     }
   }
