@@ -1,11 +1,16 @@
-//version 1.4 Dev //<>//
+//version 1.4.0.1 Dev //<>//
 //made by Shohei N. in Japan 
 //special thanks to Kento S. for advice
 
-//予定
+//課題
 //抜いた人参を戻したときの検知
 //引き合ってる時の音量下げる
 //引き合いと抜けたあとの音がかぶる
+//引っ張ってるだけでぽんぽｐんなる→常に圧力開け続けないといけない
+//→最悪音量
+//圧力センサの設置方法が悪い
+//圧力が何秒以上0だったら抜かれたと検知。0.5秒とか
+
 
 //Firmata
 import org.firmata.*;
@@ -90,13 +95,13 @@ void draw() {
 
   if (millis % 5 == 0) {
     if (run) {
-      if (sensor_value <= 70) {
+      if (sensor_value <= 90) { //引っ張っている検知
         mode = 1;
         mode1=true;
         max_hippari=true; //最大まで引っ張られたことを記録
         arduino.digitalWrite(motorA, Arduino.LOW);
         arduino.digitalWrite(motorB, Arduino.HIGH);
-        arduino.analogWrite(PWM_mot, 170);
+        arduino.analogWrite(PWM_mot, 250);
       } else {
         mode = 0;
         arduino.digitalWrite(motorA, Arduino.LOW);
@@ -115,6 +120,7 @@ void draw() {
     //if (!player_1.isPlaying() && !player_3.isPlaying() && !player_4.isPlaying() && !player_5.isPlaying() && !player_6.isPlaying()) { //play sound
     if (!playing) {
       if (max_hippari && sensor_value > 95 ) { //抜かれたとき
+                //
         //decide playing sounds at random
         x4=(int)random(3);
         x5=(int)random(4);
