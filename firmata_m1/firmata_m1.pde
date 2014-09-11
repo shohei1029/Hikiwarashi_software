@@ -2,7 +2,7 @@
 //made by Shohei N. in Japan 
 //special thanks to HASEKEN, sasaken and Mr.Asano for advice
 
-//課題
+//課題(ATのときの)
 //抜いた人参を戻したときの検知
 //引き合ってる時の音量下げる
 //引き合いと抜けたあとの音がかぶる
@@ -125,6 +125,7 @@ void setup() {
   player_6[1] = minim.loadFile("6_fu2.mp3");
 
   //ニンジン3用．ファイル数は↑のやつと同じにしてくれると楽でいい。
+  //ニンジン3は別音声ってのはぶっちゃここだけの話まだ実装していない．先輩方の助言を乞うのも正解 
   ninjin3_player_1[0] = minim.loadFile("1_cpz-n.mp3");
   ninjin3_player_1[1] = minim.loadFile("1_mg.mp3");
   ninjin3_player_3[0] = minim.loadFile("3_hya1.mp3");
