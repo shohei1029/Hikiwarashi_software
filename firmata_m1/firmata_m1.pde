@@ -1,8 +1,8 @@
-//version 2.1.0.0 Dev for IVRC
+//version 2.2.0.0 Dev for IVRC
 //made by Shohei N. in Japan 
-//special thanks to HASEKEN, sasaken and Mr.Asano for advice
+//special thanks to HASEKEN, sasaken, Mr.Asano and Hitomi-san for advice
 
-//課題(ATのときの)
+//課題(ATのときの)，今はもう大丈夫だといいな
 //抜いた人参を戻したときの検知
 //引き合ってる時の音量下げる
 //引き合いと抜けたあとの音がかぶる
@@ -11,7 +11,7 @@
 //メモ
 //ニンジン1を揺らすのはキーボードの'a''A'キーをおした時→このコードの後ろのほうにある
 //ニンジン１ 新しく作るもの１ →手動キーボード操作ではじまる．ニンジン２と同様に抜けたら音が鳴る．
-//ニンジン２ 従来のものの改良 →ことこと揺れるだけ，ランダム
+//ニンジン２ 従来のものの改良 →ことこと揺れるだけ，ランダム．圧力センサ不使用
 //ニンジン３ 新しく作るもの２ メインらしい
 
 //↓変更（なおちゃんの気まぐれ
@@ -20,8 +20,8 @@
 //ニンジン3がメイン。ニンジン2がことこと揺れるだけ！！！
 //AT東北の音声はニンジン1用。ニンジン3用は新しくとる←ファイルを入れやすいよう変数に。それぞれ３種類くらい
 
-//実装予定（未実装）
-//ニンジン３は別音声。分岐自体をなんとかする必要。
+//pinmode調べる．firmataでもなんかある→OK
+//minimのisplaying()、毎フレーム検知．全てのisplayingがfalseだったら先に宣言してたやつもfalse
 
 //使用法メモ
 //キーボード 'a' でニンジン１が揺れて 'b' でニンジン3が揺れるかもね
@@ -38,11 +38,11 @@ Arduino arduino;
 int sensor_pin = 0; //ninjin3
 int sensor_pin_ninjin1 = 2; //ニンジン1(新設)の圧力センサ
 int switch_ninjin1 = 4; //ニンジン１のスイッチ（仮
-int switch_ninjin3 = 5; //ニンジン3のスイッチ（仮
+int switch_ninjin3 = 3; //ニンジン3のスイッチ（仮
 
 //motor 1,3
-int motor1 = 1; //仮
-int motor3 = 3; //仮
+int motor1 = 12; //仮
+int motor3 = 13; //仮
 //motor 2 (ATで使ったやつ)
 int motorA = 7;
 int motorB = 8;
@@ -79,11 +79,13 @@ int x6;
 float sensor_value; //ニンジン3
 float sensor_value_ninjin1; //ニンジン1
 boolean run = true;
-float millis = millis();
+long flame = 0;
 //Hippari GuI(ai)
 int mode=0;
 boolean mode1=false;
-boolean max_hippari=false;
+boolean ninjin1_pulling = false;
+boolean ninjin3_pulling = false;
+boolean max_hippari=false;  //ATの遺産．スイッチ革命により使わない方向へ
 int mode1random;
 
 boolean playing = false;
@@ -98,6 +100,12 @@ void setup() {
   size(300, 500);
   //println(Arduino.list()); //list ports
   arduino = new Arduino(this, Arduino.list()[2], 57600);
+  arduino.pinMode(switch_ninjin1, Arduino.INPUT);
+  arduino.pinMode(switch_ninjin3, Arduino.INPUT);
+  arduino.pinMode(motor1,Arduino.OUTPUT);
+  arduino.pinMode(motor3,Arduino.OUTPUT);
+  arduino.pinMode(sensor_pin, Arduino.OUTPUT);
+  arduino.pinMode(sensor_pin_ninjin1, Arduino.OUTPUT);
   // set up MusicPlayer
   minim = new Minim(this);
   //ファイル名の設定．
@@ -150,36 +158,40 @@ void setup() {
 void draw() {
   background(0);
   fill(255);
-  //float millis = millis();
+  flame ++;
 
   //Debug,画面に圧力センサの値，メモリの数値/TFを表示
   debug();
 
-  if (millis % 5 == 0) {
+  if (flame % 5 == 0) {
     if (run) {
       if (sensor_value <= 90) { //引っ張っている検知 ninjin3
+        ninjin3_pulling = true;
         mode = 1; //mode==1は引っ張りあってることを示す
         mode1=true;
-        max_hippari=true; //最大まで引っ張られたことを記録
+        //max_hippari=true; //最大まで引っ張られたことを記録
         //arduino.digitalWrite(motorA, Arduino.LOW); //ニンジン２はことこと揺らすだけなので削除
         //arduino.digitalWrite(motorB, Arduino.HIGH);
         //arduino.analogWrite(PWM_mot, 250);
         arduino.digitalWrite(motor3, Arduino.HIGH);
-
       } else if (sensor_value_ninjin1 <= 90) {
+        ninjin1_pulling = true;
         mode = 1; //mode==1は引っ張りあってることを示す
         mode1=true;
-        max_hippari=true; //最大まで引っ張られたことを記録
+        //max_hippari=true; //最大まで引っ張られたことを記録
         arduino.digitalWrite(motor1, Arduino.HIGH);
-  
       } else {
         mode = 0;
         //arduino.digitalWrite(motorA, Arduino.LOW);
         //arduino.digitalWrite(motorB, Arduino.LOW);
-        arduino.digitalWrite(motor1, Arduino.LOW);
-        arduino.digitalWrite(motor3, Arduino.LOW);
-
-
+        if (key == 'a') {
+        } else {
+          arduino.digitalWrite(motor1, Arduino.LOW);
+        } 
+        if (key == 'b') {
+        } else {
+          arduino.digitalWrite(motor3, Arduino.LOW);
+        }
       }
     }
   } else { 
@@ -191,61 +203,86 @@ void draw() {
 
     waitingchirp = (int)random(1000);//引いてない時の鳴き声再生
     mode1random = (int)random(10);
-    ninjin2_shake = (int)random(2000);
+    ninjin2_shake = (int)random(1500);
 
 
     //play sounds -nakigoe
     //if (!player_1.isPlaying() && !player_3.isPlaying() && !player_4.isPlaying() && !player_5.isPlaying() && !player_6.isPlaying()) { //play sound
-    if (!playing) {
-//      if (max_hippari && (sensor_value > 80 || sensor_value_ninjin1 > 80)) { //抜かれたとき
-        //"HIGH"は1らしい
-        if (arduino.digitalRead(switch_ninjin1) == 0 || arduino.digitalRead(switch_ninjin3) == 0) { //抜かれた時．未テストでうまく動かないかも．そんときは↑コメント消してこっちをコメントアウトしてみ
-        //if (millis == pulled_delay + 801) { //抜かれた801ミリ秒後に音声再生
-          if (arduino.digitalRead(switch_ninjin1) == 0){
-            nuketa_ninjin1 = true;
-          } else if (arduino.digitalRead(switch_ninjin3) == 0){
-            nuketa_ninjin3 = true;
-          }
+      if (true) {
+      //      if (max_hippari && (sensor_value > 80 || sensor_value_ninjin1 > 80)) { //抜かれたとき
+      //"HIGH"は1らしい
 
+      if (arduino.digitalRead(switch_ninjin1) == 0 && nuketa_ninjin1 == false) {
+        nuketa_ninjin1 = true;
         x4=(int)random(3); //decide playing sounds at random
         x5=(int)random(4);
-        playing=true;
+        //playing=true;
 
-        println("1");
-        nakigoe(true, player_4[x4]);//pon
-        mmdelay(1000); //1秒(1000ミリ秒)待つ
+        println("1(ninjin1_nuketa)");
+        pause_sound();
+        nakigoe(true, player_4[x4]);//pon, ninjin1とninjin3共通(pon
+        mmdelay(500); //500ミリ秒待つ
         nakigoe(true, player_5[x5]); //after pulling
 
-        max_hippari = false;
-      } else if (mode1) { //引っ張りあってるとき
+        //max_hippari = false;
+      } else if (arduino.digitalRead(switch_ninjin3) == 0 && nuketa_ninjin3 == false) {
+        nuketa_ninjin3 = true;
+        x4=(int)random(3); //decide playing sounds at random
+        x5=(int)random(4);
+        //playing=true;
+
+        println("1(ninjin3_nuketa)");
+        pause_sound();
+        nakigoe(true, player_4[x4]);//pon ninjin1とninjin3共通
+        mmdelay(500); //500ミリ秒待つ
+        nakigoe(true, ninjin3_player_5[x5]); //after pulling
+
+        //max_hippari = false;
+        // } else if (mode1) { //引っ張りあってるとき
+        //   x3=(int)random(3);
+        //   playing=true;
+        //   println("2");
+        //   nakigoe(true, player_3[x3]);
+        //   mmdelay(100); //100ミリ秒待つ
+
+        //   playing = false;
+        //   mode1=false;
+      } else if (ninjin1_pulling == true && isntplaying()==true) {
         x3=(int)random(3);
-        playing=true;
+        //playing=true;
         println("2");
         nakigoe(true, player_3[x3]);
         mmdelay(100); //100ミリ秒待つ
-
-        playing = false;
+        //playing = false;
         mode1=false;
-      } else if (nuketa_ninjin1 == true && arduino.digitalRead(switch_ninjin1) == 1) { //抜けたにんじん1が戻された時."HIGH"って返してくれるのか不明．動かなかったら先輩に伺ったほうがいいかも
+        ninjin1_pulling = false;
+      } else if (ninjin3_pulling == true && isntplaying()==true) {
+        x3=(int)random(3);
+        //playing=true;
+        println("2");
+        nakigoe(true, ninjin3_player_3[x3]);
+        mmdelay(100); //100ミリ秒待つ
+        //playing = false;
+        mode1=false;
+        ninjin3_pulling = false;
+      } else if (nuketa_ninjin1 == true && arduino.digitalRead(switch_ninjin1) == 1 && isntplaying()==true) { //抜けたにんじん1が戻された時
         nuketa_ninjin1 = false;
         x6=(int)random(1);
-        playing=true;
-        nakigoe(true,player_6[x6]);
-        playing=false;
-
-      } else if (nuketa_ninjin3 == true && arduino.digitalRead(switch_ninjin3) == 1) { //抜けたにんじん3が戻された時
+        //playing=true;
+        nakigoe(true, player_6[x6]);
+        //playing=false;
+      } else if (nuketa_ninjin3 == true && arduino.digitalRead(switch_ninjin3) == 1 && isntplaying()==true) { //抜けたにんじん3が戻された時
         nuketa_ninjin3 = false;
         x6=(int)random(1);
-        playing=true;
-        nakigoe(true,player_6[x6]);
-        playing=false;
-      } else if (mode == 0 && waitingchirp == 7) { //待機時にランダムで.別に7じゃなくてもなんでもいい
+        //playing=true;
+        nakigoe(true, ninjin3_player_6[x6]);
+        //playing=false;
+      } else if (mode == 0 && waitingchirp == 7 && isntplaying()==true) { //待機時にランダムで.別に7じゃなくてもなんでもいい
         x1=(int)random(1);
-        playing=true;
+        //playing=true;
         println("3");
         nakigoe(true, player_1[x1]);
-        playing=false;
-
+        //playing=false;
       } else if (ninjin2_shake == 7) { //ランダムでニンジン2を揺らす
         arduino.digitalWrite(motorA, Arduino.LOW);
         arduino.digitalWrite(motorB, Arduino.HIGH);
@@ -253,7 +290,6 @@ void draw() {
         mmdelay(1000);
         arduino.digitalWrite(motorA, Arduino.LOW);
         arduino.digitalWrite(motorB, Arduino.LOW);
-
       }
     }
   }
@@ -265,14 +301,14 @@ void nakigoe(boolean frag, AudioPlayer myPlayer) {
   if (frag) {
     myPlayer.rewind();
     myPlayer.play();
-    playing=false;
+    //playing=false;
   }
 }
 
 void mmdelay(int delay_mm) {
   //  float pulled_delay;
   //  float pulled_delay_after;
-  float pulled_delay = millis;
+  float pulled_delay = millis();
   float pulled_delay_after = pulled_delay;
   while (pulled_delay_after < pulled_delay + delay_mm) {
     pulled_delay_after = millis();
@@ -280,18 +316,15 @@ void mmdelay(int delay_mm) {
 }
 
 void keyPressed() {
-  if (key == 'a') {
-    //モーター１を動かす動作を入れる
+  if (key == 'a') {  //モーター１(ニンジン1)を動かす動作を入れる
     arduino.digitalWrite(motor1, Arduino.HIGH);
-    mmdelay(100);
+    //mmdelay(3000);
     arduino.digitalWrite(motor1, Arduino.LOW);
-
   } else if (key == 'b') {
-    //モーター3を動かす動作を入れる
+    //モーター3(ニンジン3)を動かす動作を入れる
     arduino.digitalWrite(motor3, Arduino.HIGH);
-    mmdelay(100);
+    //mmdelay(3000);
     arduino.digitalWrite(motor3, Arduino.LOW);
-
   }
   println(key);
   //arduino.digitalWrite(motor1, Arduino.LOW);
@@ -308,21 +341,77 @@ void mouseClicked() { //画面上をクリックすることでプログラム�
 //sound stop
 void stop()
 {
-  //  player_pulled.close();
-  //  player_1.close();
-  //  player_2.close();
-  //  player_3.close();
-  //  player_1.close();
   minim.stop();
   super.stop();
 }
 
+boolean isntplaying(){
+  if(player_1[0].isPlaying()==false && player_1[1].isPlaying()==false && player_3[0].isPlaying()==false && player_3[1].isPlaying()==false && player_3[2].isPlaying()==false && player_3[3].isPlaying()==false && player_4[0].isPlaying()==false && player_4[1].isPlaying()==false && player_4[2].isPlaying()==false && player_4[3].isPlaying()==false && player_5[0].isPlaying()==false && player_5[1].isPlaying()==false && player_5[2].isPlaying()==false && player_5[3].isPlaying()==false && player_6[0].isPlaying()==false && player_6[1].isPlaying()==false){
+    if(ninjin3_player_1[0].isPlaying()==false && ninjin3_player_1[1].isPlaying()==false && ninjin3_player_3[0].isPlaying()==false && ninjin3_player_3[1].isPlaying()==false && ninjin3_player_3[2].isPlaying()==false && ninjin3_player_3[3].isPlaying()==false && ninjin3_player_4[0].isPlaying()==false && ninjin3_player_4[1].isPlaying()==false && ninjin3_player_4[2].isPlaying()==false && ninjin3_player_4[3].isPlaying()==false && ninjin3_player_5[0].isPlaying()==false && ninjin3_player_5[1].isPlaying()==false && ninjin3_player_5[2].isPlaying()==false && ninjin3_player_5[3].isPlaying()==false && ninjin3_player_6[0].isPlaying()==false && ninjin3_player_6[1].isPlaying()==false){ //<>//
+      return true;
+    }
+  }
+
+  return false;
+
+}
+
+void pause_sound(){
+  player_1[0].pause();
+  player_1[1].pause();
+  player_3[0].pause();
+  player_3[1].pause();
+  player_3[2].pause();
+  player_3[3].pause();
+  player_4[0].pause();
+  player_4[1].pause();
+  player_4[2].pause();
+  player_4[3].pause();
+  player_5[0].pause();
+  player_5[1].pause();
+  player_5[2].pause();
+  player_5[3].pause();
+  player_6[0].pause();
+  player_6[1].pause();
+  ninjin3_player_1[0].pause();
+  ninjin3_player_1[1].pause();
+  ninjin3_player_3[0].pause();
+  ninjin3_player_3[1].pause();
+  ninjin3_player_3[2].pause();
+  ninjin3_player_3[3].pause();
+  ninjin3_player_4[0].pause();
+  ninjin3_player_4[1].pause();
+  ninjin3_player_4[2].pause();
+  ninjin3_player_4[3].pause();
+  ninjin3_player_5[0].pause();
+  ninjin3_player_5[1].pause();
+  ninjin3_player_5[2].pause();
+  ninjin3_player_5[3].pause();
+  ninjin3_player_6[0].pause();
+  ninjin3_player_6[1].pause();
+} 
+
 void debug() {
-  text("sensor: " + sensor_value, 10, 20);
-  text("mode: " + mode, 10, 40);
+  text("sensor_ninjin1: " + sensor_value_ninjin1, 10, 20);
+  text("sensor_ninjin3: " + sensor_value, 10, 40);  
+  text("mode: " + mode, 10, 60);
   String run_string =String.valueOf( run );
-  text("run: " + run_string, 10, 60); 
+  text("run: " + run_string, 10, 80); 
   String playing_string =String.valueOf( playing );
-  text("playing: " + playing_string, 10, 100); 
-  text("waitingchirp: "+waitingchirp, 10, 120);
+  text("playing: " + playing_string, 10, 100);
+  //text("waitingchirp: "+waitingchirp, 10, 120);
+  String ninjin1_pulling_string =String.valueOf( ninjin1_pulling );
+  text("ninjin1_pulling: " + ninjin1_pulling_string, 10, 140); 
+  String ninjin3_pulling_string =String.valueOf( ninjin3_pulling );
+  text("ninjin3_pulling: " + ninjin3_pulling_string, 10, 160); 
+  String nuketa_ninjin1_string =String.valueOf( nuketa_ninjin1 );
+  text("nuketa_ninjin1: " + nuketa_ninjin1_string, 10, 180); 
+  String nuketa_ninjin3_string =String.valueOf( nuketa_ninjin3 );
+  text("nuketa_ninjin3: " + nuketa_ninjin3_string, 10, 200);   
+  String mode1_string =String.valueOf( mode1 );
+  text("(mode1): " + mode1_string, 10, 220);
+  String switch_ninjin1_string =String.valueOf( arduino.digitalRead(switch_ninjin1) );
+  text("switch_ninjin1: " + switch_ninjin1_string, 10, 240);   
+  String switch_ninjin3_string =String.valueOf( arduino.digitalRead(switch_ninjin3) );
+  text("switch_ninjin3: " + switch_ninjin3_string, 10, 260);   
 }
