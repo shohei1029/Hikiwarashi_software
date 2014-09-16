@@ -1,4 +1,4 @@
-//version 2.2.0.1 Dev for IVRC //<>//
+//version 2.3.0.0 Dev for IVRC
 //made by Shohei N. in Japan 
 //special thanks to HASEKEN, sasaken, Mr.Asano and Hitomi-san for advice
 
@@ -22,6 +22,8 @@
 
 //pinmode調べる．firmataでもなんかある→OK
 //minimのisplaying()、毎フレーム検知．全てのisplayingがfalseだったら先に宣言してたやつもfalse
+
+//音のキーボード操作。このプログラムと、別のプログラムの2つ
 
 //使用法メモ
 //キーボード 'a' でニンジン１が揺れて 'b' でニンジン3が揺れるかもね
@@ -47,6 +49,7 @@ int motor3 = 13; //仮
 int motorA = 7;
 int motorB = 8;
 int PWM_mot = 9;
+
 
 
 
@@ -177,11 +180,8 @@ void draw() {
         //arduino.analogWrite(PWM_mot, 250);
         arduino.digitalWrite(motor3, Arduino.HIGH);
       } else {
-        if (key == 'b') {
-        } else {
-          mode = 0;
-          arduino.digitalWrite(motor3, Arduino.LOW);
-        }
+        mode = 0;
+        arduino.digitalWrite(motor3, Arduino.LOW);
       }
 
       if (sensor_value_ninjin1 <= 90) {
@@ -192,12 +192,7 @@ void draw() {
         arduino.digitalWrite(motor1, Arduino.HIGH);
       } else {
         mode = 0;
-        //arduino.digitalWrite(motorA, Arduino.LOW);
-        //arduino.digitalWrite(motorB, Arduino.LOW);
-        if (key == 'a') {
-        } else {
-          arduino.digitalWrite(motor1, Arduino.LOW);
-        }
+        arduino.digitalWrite(motor1, Arduino.LOW);
       }
     }
   } else { 
@@ -215,93 +210,93 @@ void draw() {
     //play sounds -nakigoe
     //if (!player_1.isPlaying() && !player_3.isPlaying() && !player_4.isPlaying() && !player_5.isPlaying() && !player_6.isPlaying()) { //play sound
     //if (true) {
-      //      if (max_hippari && (sensor_value > 80 || sensor_value_ninjin1 > 80)) { //抜かれたとき
-      //"HIGH"は1らしい
+    //      if (max_hippari && (sensor_value > 80 || sensor_value_ninjin1 > 80)) { //抜かれたとき
+    //"HIGH"は1らしい
 
-      if (arduino.digitalRead(switch_ninjin1) == 0 && nuketa_ninjin1 == false) {
-        nuketa_ninjin1 = true;
-        x4=(int)random(3); //decide playing sounds at random
-        x5=(int)random(4);
-        //playing=true;
+    if (arduino.digitalRead(switch_ninjin1) == 0 && nuketa_ninjin1 == false) {
+      nuketa_ninjin1 = true;
+      x4=(int)random(3); //decide playing sounds at random
+      x5=(int)random(4);
+      //playing=true;
 
-        println("ninjin1_nuketa");
-        pause_sound();
-        nakigoe(true, player_4[x4]);//pon, ninjin1とninjin3共通(pon
-        mmdelay(500); //500ミリ秒待つ
-        nakigoe(true, player_5[x5]); //after pulling
+      println("ninjin1_nuketa");
+      pause_sound();
+      nakigoe(true, player_4[x4]);//pon, ninjin1とninjin3共通(pon
+      mmdelay(500); //500ミリ秒待つ
+      nakigoe(true, player_5[x5]); //after pulling
 
-        //max_hippari = false;
-      } else if (arduino.digitalRead(switch_ninjin3) == 0 && nuketa_ninjin3 == false) {
-        nuketa_ninjin3 = true;
-        x4=(int)random(3); //decide playing sounds at random
-        x5=(int)random(4);
-        //playing=true;
+      //max_hippari = false;
+    } else if (arduino.digitalRead(switch_ninjin3) == 0 && nuketa_ninjin3 == false) {
+      nuketa_ninjin3 = true;
+      x4=(int)random(3); //decide playing sounds at random
+      x5=(int)random(4);
+      //playing=true;
 
-        println("ninjin3_nuketa");
-        pause_sound();
-        nakigoe(true, player_4[x4]);//pon ninjin1とninjin3共通
-        mmdelay(500); //500ミリ秒待つ
-        nakigoe(true, ninjin3_player_5[x5]); //after pulling
+      println("ninjin3_nuketa");
+      pause_sound();
+      nakigoe(true, player_4[x4]);//pon ninjin1とninjin3共通
+      mmdelay(500); //500ミリ秒待つ
+      nakigoe(true, ninjin3_player_5[x5]); //after pulling
 
-        //max_hippari = false;
-        // } else if (mode1) { //引っ張りあってるとき
-        //   x3=(int)random(3);
-        //   playing=true;
-        //   println("2");
-        //   nakigoe(true, player_3[x3]);
-        //   mmdelay(100); //100ミリ秒待つ
+      //max_hippari = false;
+      // } else if (mode1) { //引っ張りあってるとき
+      //   x3=(int)random(3);
+      //   playing=true;
+      //   println("2");
+      //   nakigoe(true, player_3[x3]);
+      //   mmdelay(100); //100ミリ秒待つ
 
-        //   playing = false;
-        //   mode1=false;
-      } else if (ninjin1_pulling == true && isntplaying()==true) {
-        x3=(int)random(3);
-        //playing=true;
-        println("ninjin1_pulling!");
-        nakigoe(true, player_3[x3]);
-        mmdelay(100); //100ミリ秒待つ
-        //playing = false;
-        //mode1=false;
-        ninjin1_pulling = false;
-      } else if (ninjin3_pulling == true && isntplaying()==true) {
-        x3=(int)random(3);
-        //playing=true;
-        println("ninjin3_pulling!");
-        nakigoe(true, ninjin3_player_3[x3]);
-        mmdelay(100); //100ミリ秒待つ
-        //playing = false;
-        //mode1=false;
-        ninjin3_pulling = false;
-      } else if (nuketa_ninjin1 == true && arduino.digitalRead(switch_ninjin1) == 1) { //抜けたにんじん1が戻された時
-        nuketa_ninjin1 = false;
-        x6=(int)random(1);
-        //playing=true;
-        println("ninjin1_back!");
-        pause_sound();
-        nakigoe(true, player_6[x6]);
-        //playing=false;
-      } else if (nuketa_ninjin3 == true && arduino.digitalRead(switch_ninjin3) == 1) { //抜けたにんじん3が戻された時
-        nuketa_ninjin3 = false;
-        x6=(int)random(1);
-        //playing=true;
-        println("ninjin3_back!");
-        pause_sound();
-        nakigoe(true, ninjin3_player_6[x6]);
-        //playing=false;
-      } else if (mode == 0 && waitingchirp == 7 && isntplaying()==true) { //待機時にランダムで.別に7じゃなくてもなんでもいい
-        x1=(int)random(1);
-        //playing=true;
-        println("waitingchirp");
-        nakigoe(true, player_1[x1]);
-        //playing=false;
-      } else if (ninjin2_shake == 7) { //ランダムでニンジン2を揺らす
-        arduino.digitalWrite(motorA, Arduino.LOW);
-        arduino.digitalWrite(motorB, Arduino.HIGH);
-        arduino.analogWrite(PWM_mot, 250);
-        mmdelay(1000);
-        arduino.digitalWrite(motorA, Arduino.LOW);
-        arduino.digitalWrite(motorB, Arduino.LOW);
-      }
-   // }
+      //   playing = false;
+      //   mode1=false;
+    } else if (ninjin1_pulling == true && isntplaying()==true) {
+      x3=(int)random(3);
+      //playing=true;
+      println("ninjin1_pulling!");
+      nakigoe(true, player_3[x3]);
+      mmdelay(100); //100ミリ秒待つ
+      //playing = false;
+      //mode1=false;
+      ninjin1_pulling = false;
+    } else if (ninjin3_pulling == true && isntplaying()==true) {
+      x3=(int)random(3);
+      //playing=true;
+      println("ninjin3_pulling!");
+      nakigoe(true, ninjin3_player_3[x3]);
+      mmdelay(100); //100ミリ秒待つ
+      //playing = false;
+      //mode1=false;
+      ninjin3_pulling = false;
+    } else if (nuketa_ninjin1 == true && arduino.digitalRead(switch_ninjin1) == 1) { //抜けたにんじん1が戻された時
+      nuketa_ninjin1 = false;
+      x6=(int)random(1);
+      //playing=true;
+      println("ninjin1_back!");
+      pause_sound();
+      nakigoe(true, player_6[x6]);
+      //playing=false;
+    } else if (nuketa_ninjin3 == true && arduino.digitalRead(switch_ninjin3) == 1) { //抜けたにんじん3が戻された時
+      nuketa_ninjin3 = false;
+      x6=(int)random(1);
+      //playing=true;
+      println("ninjin3_back!");
+      pause_sound();
+      nakigoe(true, ninjin3_player_6[x6]);
+      //playing=false;
+    } else if (mode == 0 && waitingchirp == 7 && isntplaying()==true) { //待機時にランダムで.別に7じゃなくてもなんでもいい
+      x1=(int)random(1);
+      //playing=true;
+      println("waitingchirp");
+      nakigoe(true, player_1[x1]);
+      //playing=false;
+    } else if (ninjin2_shake == 7) { //ランダムでニンジン2を揺らす
+      arduino.digitalWrite(motorA, Arduino.LOW);
+      arduino.digitalWrite(motorB, Arduino.HIGH);
+      arduino.analogWrite(PWM_mot, 250);
+      mmdelay(1000);
+      arduino.digitalWrite(motorA, Arduino.LOW);
+      arduino.digitalWrite(motorB, Arduino.LOW);
+    }
+    // }
   }
 }
 
