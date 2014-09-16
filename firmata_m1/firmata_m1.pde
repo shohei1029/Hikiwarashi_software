@@ -1,4 +1,4 @@
-//version 2.2.0.0 Dev for IVRC
+//version 2.2.0.1 Dev for IVRC //<>//
 //made by Shohei N. in Japan 
 //special thanks to HASEKEN, sasaken, Mr.Asano and Hitomi-san for advice
 
@@ -102,8 +102,8 @@ void setup() {
   arduino = new Arduino(this, Arduino.list()[2], 57600);
   arduino.pinMode(switch_ninjin1, Arduino.INPUT);
   arduino.pinMode(switch_ninjin3, Arduino.INPUT);
-  arduino.pinMode(motor1,Arduino.OUTPUT);
-  arduino.pinMode(motor3,Arduino.OUTPUT);
+  arduino.pinMode(motor1, Arduino.OUTPUT);
+  arduino.pinMode(motor3, Arduino.OUTPUT);
   arduino.pinMode(sensor_pin, Arduino.OUTPUT);
   arduino.pinMode(sensor_pin_ninjin1, Arduino.OUTPUT);
   // set up MusicPlayer
@@ -165,19 +165,29 @@ void draw() {
 
   if (flame % 5 == 0) {
     if (run) {
+      ninjin3_pulling = false;
+      ninjin1_pulling = false;
       if (sensor_value <= 90) { //引っ張っている検知 ninjin3
         ninjin3_pulling = true;
         mode = 1; //mode==1は引っ張りあってることを示す
-        mode1=true;
+        //mode1=true;
         //max_hippari=true; //最大まで引っ張られたことを記録
         //arduino.digitalWrite(motorA, Arduino.LOW); //ニンジン２はことこと揺らすだけなので削除
         //arduino.digitalWrite(motorB, Arduino.HIGH);
         //arduino.analogWrite(PWM_mot, 250);
         arduino.digitalWrite(motor3, Arduino.HIGH);
-      } else if (sensor_value_ninjin1 <= 90) {
+      } else {
+        if (key == 'b') {
+        } else {
+          mode = 0;
+          arduino.digitalWrite(motor3, Arduino.LOW);
+        }
+      }
+
+      if (sensor_value_ninjin1 <= 90) {
         ninjin1_pulling = true;
         mode = 1; //mode==1は引っ張りあってることを示す
-        mode1=true;
+        //mode1=true;
         //max_hippari=true; //最大まで引っ張られたことを記録
         arduino.digitalWrite(motor1, Arduino.HIGH);
       } else {
@@ -187,10 +197,6 @@ void draw() {
         if (key == 'a') {
         } else {
           arduino.digitalWrite(motor1, Arduino.LOW);
-        } 
-        if (key == 'b') {
-        } else {
-          arduino.digitalWrite(motor3, Arduino.LOW);
         }
       }
     }
@@ -208,7 +214,7 @@ void draw() {
 
     //play sounds -nakigoe
     //if (!player_1.isPlaying() && !player_3.isPlaying() && !player_4.isPlaying() && !player_5.isPlaying() && !player_6.isPlaying()) { //play sound
-      if (true) {
+    //if (true) {
       //      if (max_hippari && (sensor_value > 80 || sensor_value_ninjin1 > 80)) { //抜かれたとき
       //"HIGH"は1らしい
 
@@ -218,7 +224,7 @@ void draw() {
         x5=(int)random(4);
         //playing=true;
 
-        println("1(ninjin1_nuketa)");
+        println("ninjin1_nuketa");
         pause_sound();
         nakigoe(true, player_4[x4]);//pon, ninjin1とninjin3共通(pon
         mmdelay(500); //500ミリ秒待つ
@@ -231,7 +237,7 @@ void draw() {
         x5=(int)random(4);
         //playing=true;
 
-        println("1(ninjin3_nuketa)");
+        println("ninjin3_nuketa");
         pause_sound();
         nakigoe(true, player_4[x4]);//pon ninjin1とninjin3共通
         mmdelay(500); //500ミリ秒待つ
@@ -250,37 +256,41 @@ void draw() {
       } else if (ninjin1_pulling == true && isntplaying()==true) {
         x3=(int)random(3);
         //playing=true;
-        println("2");
+        println("ninjin1_pulling!");
         nakigoe(true, player_3[x3]);
         mmdelay(100); //100ミリ秒待つ
         //playing = false;
-        mode1=false;
+        //mode1=false;
         ninjin1_pulling = false;
       } else if (ninjin3_pulling == true && isntplaying()==true) {
         x3=(int)random(3);
         //playing=true;
-        println("2");
+        println("ninjin3_pulling!");
         nakigoe(true, ninjin3_player_3[x3]);
         mmdelay(100); //100ミリ秒待つ
         //playing = false;
-        mode1=false;
+        //mode1=false;
         ninjin3_pulling = false;
-      } else if (nuketa_ninjin1 == true && arduino.digitalRead(switch_ninjin1) == 1 && isntplaying()==true) { //抜けたにんじん1が戻された時
+      } else if (nuketa_ninjin1 == true && arduino.digitalRead(switch_ninjin1) == 1) { //抜けたにんじん1が戻された時
         nuketa_ninjin1 = false;
         x6=(int)random(1);
         //playing=true;
+        println("ninjin1_back!");
+        pause_sound();
         nakigoe(true, player_6[x6]);
         //playing=false;
-      } else if (nuketa_ninjin3 == true && arduino.digitalRead(switch_ninjin3) == 1 && isntplaying()==true) { //抜けたにんじん3が戻された時
+      } else if (nuketa_ninjin3 == true && arduino.digitalRead(switch_ninjin3) == 1) { //抜けたにんじん3が戻された時
         nuketa_ninjin3 = false;
         x6=(int)random(1);
         //playing=true;
+        println("ninjin3_back!");
+        pause_sound();
         nakigoe(true, ninjin3_player_6[x6]);
         //playing=false;
       } else if (mode == 0 && waitingchirp == 7 && isntplaying()==true) { //待機時にランダムで.別に7じゃなくてもなんでもいい
         x1=(int)random(1);
         //playing=true;
-        println("3");
+        println("waitingchirp");
         nakigoe(true, player_1[x1]);
         //playing=false;
       } else if (ninjin2_shake == 7) { //ランダムでニンジン2を揺らす
@@ -291,7 +301,7 @@ void draw() {
         arduino.digitalWrite(motorA, Arduino.LOW);
         arduino.digitalWrite(motorB, Arduino.LOW);
       }
-    }
+   // }
   }
 }
 
@@ -345,18 +355,17 @@ void stop()
   super.stop();
 }
 
-boolean isntplaying(){
-  if(player_1[0].isPlaying()==false && player_1[1].isPlaying()==false && player_3[0].isPlaying()==false && player_3[1].isPlaying()==false && player_3[2].isPlaying()==false && player_3[3].isPlaying()==false && player_4[0].isPlaying()==false && player_4[1].isPlaying()==false && player_4[2].isPlaying()==false && player_4[3].isPlaying()==false && player_5[0].isPlaying()==false && player_5[1].isPlaying()==false && player_5[2].isPlaying()==false && player_5[3].isPlaying()==false && player_6[0].isPlaying()==false && player_6[1].isPlaying()==false){
-    if(ninjin3_player_1[0].isPlaying()==false && ninjin3_player_1[1].isPlaying()==false && ninjin3_player_3[0].isPlaying()==false && ninjin3_player_3[1].isPlaying()==false && ninjin3_player_3[2].isPlaying()==false && ninjin3_player_3[3].isPlaying()==false && ninjin3_player_4[0].isPlaying()==false && ninjin3_player_4[1].isPlaying()==false && ninjin3_player_4[2].isPlaying()==false && ninjin3_player_4[3].isPlaying()==false && ninjin3_player_5[0].isPlaying()==false && ninjin3_player_5[1].isPlaying()==false && ninjin3_player_5[2].isPlaying()==false && ninjin3_player_5[3].isPlaying()==false && ninjin3_player_6[0].isPlaying()==false && ninjin3_player_6[1].isPlaying()==false){ //<>//
+boolean isntplaying() {
+  if (player_1[0].isPlaying()==false && player_1[1].isPlaying()==false && player_3[0].isPlaying()==false && player_3[1].isPlaying()==false && player_3[2].isPlaying()==false && player_3[3].isPlaying()==false && player_4[0].isPlaying()==false && player_4[1].isPlaying()==false && player_4[2].isPlaying()==false && player_4[3].isPlaying()==false && player_5[0].isPlaying()==false && player_5[1].isPlaying()==false && player_5[2].isPlaying()==false && player_5[3].isPlaying()==false && player_6[0].isPlaying()==false && player_6[1].isPlaying()==false) {
+    if (ninjin3_player_1[0].isPlaying()==false && ninjin3_player_1[1].isPlaying()==false && ninjin3_player_3[0].isPlaying()==false && ninjin3_player_3[1].isPlaying()==false && ninjin3_player_3[2].isPlaying()==false && ninjin3_player_3[3].isPlaying()==false && ninjin3_player_4[0].isPlaying()==false && ninjin3_player_4[1].isPlaying()==false && ninjin3_player_4[2].isPlaying()==false && ninjin3_player_4[3].isPlaying()==false && ninjin3_player_5[0].isPlaying()==false && ninjin3_player_5[1].isPlaying()==false && ninjin3_player_5[2].isPlaying()==false && ninjin3_player_5[3].isPlaying()==false && ninjin3_player_6[0].isPlaying()==false && ninjin3_player_6[1].isPlaying()==false) {
       return true;
     }
   }
 
   return false;
-
 }
 
-void pause_sound(){
+void pause_sound() {
   player_1[0].pause();
   player_1[1].pause();
   player_3[0].pause();
@@ -413,5 +422,5 @@ void debug() {
   String switch_ninjin1_string =String.valueOf( arduino.digitalRead(switch_ninjin1) );
   text("switch_ninjin1: " + switch_ninjin1_string, 10, 240);   
   String switch_ninjin3_string =String.valueOf( arduino.digitalRead(switch_ninjin3) );
-  text("switch_ninjin3: " + switch_ninjin3_string, 10, 260);   
+  text("switch_ninjin3: " + switch_ninjin3_string, 10, 260);
 }
