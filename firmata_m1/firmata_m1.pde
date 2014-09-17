@@ -1,6 +1,9 @@
-//version 2.3.0.0 Dev for IVRC
+//version 2.4.0.0 Dev for IVRC
 //made by Shohei N. in Japan 
 //special thanks to HASEKEN, sasaken, Mr.Asano and Hitomi-san for advice
+
+//change log
+//手動でニンジン揺らす機能を削除
 
 //課題(ATのときの)，今はもう大丈夫だといいな
 //抜いた人参を戻したときの検知
@@ -20,13 +23,12 @@
 //ニンジン3がメイン。ニンジン2がことこと揺れるだけ！！！
 //AT東北の音声はニンジン1用。ニンジン3用は新しくとる←ファイルを入れやすいよう変数に。それぞれ３種類くらい
 
-//pinmode調べる．firmataでもなんかある→OK
-//minimのisplaying()、毎フレーム検知．全てのisplayingがfalseだったら先に宣言してたやつもfalse
 
 //音のキーボード操作。このプログラムと、別のプログラムの2つ
+//太鼓の音消す
 
 //使用法メモ
-//キーボード 'a' でニンジン１が揺れて 'b' でニンジン3が揺れるかもね
+
 
 //Firmata
 import org.firmata.*;
@@ -289,12 +291,12 @@ void draw() {
       nakigoe(true, player_1[x1]);
       //playing=false;
     } else if (ninjin2_shake == 7) { //ランダムでニンジン2を揺らす
-      arduino.digitalWrite(motorA, Arduino.LOW);
-      arduino.digitalWrite(motorB, Arduino.HIGH);
-      arduino.analogWrite(PWM_mot, 250);
-      mmdelay(1000);
-      arduino.digitalWrite(motorA, Arduino.LOW);
-      arduino.digitalWrite(motorB, Arduino.LOW);
+      // arduino.digitalWrite(motorA, Arduino.LOW);
+      // arduino.digitalWrite(motorB, Arduino.HIGH);
+      // arduino.analogWrite(PWM_mot, 250);
+      // mmdelay(1000);
+      // arduino.digitalWrite(motorA, Arduino.LOW);
+      // arduino.digitalWrite(motorB, Arduino.LOW);
     }
     // }
   }
@@ -321,18 +323,25 @@ void mmdelay(int delay_mm) {
 }
 
 void keyPressed() {
-  if (key == 'a') {  //モーター１(ニンジン1)を動かす動作を入れる
-    arduino.digitalWrite(motor1, Arduino.HIGH);
-    //mmdelay(3000);
-    arduino.digitalWrite(motor1, Arduino.LOW);
-  } else if (key == 'b') {
-    //モーター3(ニンジン3)を動かす動作を入れる
-    arduino.digitalWrite(motor3, Arduino.HIGH);
-    //mmdelay(3000);
-    arduino.digitalWrite(motor3, Arduino.LOW);
+  if (key == '1') {  //引き合ってる時の鳴き声
+    x3=(int)random(3);
+    println("manulalsound_pulling");
+    nakigoe(true, player_3[x3]);
+  } else if (key == '2') { //pon&抜けた時の鳴き声
+    x4=(int)random(3);
+    x5=(int)random(4);
+    println("manulalsound_pon&after");
+    pause_sound();
+    nakigoe(true, player_4[x4]);//pon, ninjin1とninjin3共通(pon
+    mmdelay(500); //500ミリ秒待つ
+    nakigoe(true, player_5[x5]); //after pulling
+  } else if (key == '3') { //ニンジン戻されてほっとした時の鳴き声
+    x6=(int)random(1);
+    println("manualsound_ninjinback!");
+    pause_sound();
+    nakigoe(true, player_6[x6]);
   }
   println(key);
-  //arduino.digitalWrite(motor1, Arduino.LOW);
 }
 
 void mouseClicked() { //画面上をクリックすることでプログラムの動作をON-OFFできる  
